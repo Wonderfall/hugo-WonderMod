@@ -85,7 +85,7 @@
 {{- /* Favicons */}}
 <link rel="icon" href="{{ site.Params.assets.favicon | default "favicon.ico" | absURL }}">
 <link rel="icon" sizes="any" type="image/svg+xml" href="{{ site.Params.assets.faviconSVG | default "favicon.svg" | absURL }}">
-<link rel="apple-touch-icon" type="image/png" href="{{ site.Params.assets.appleTouchIcon | default "apple-touch-icon.png" | absURL }}">
+<link rel="apple-touch-icon" href="{{ site.Params.assets.appleTouchIcon | default "apple-touch-icon.png" | absURL }}">
 <link rel="mask-icon" href="{{ site.Params.assets.maskIcon | default "mask-icon.svg" | absURL }}" color="{{ site.Params.assets.maskIconColor | default "#2e2e33" }}">
 <link rel="manifest" href="{{ site.Params.assets.webmanifest | default "manifest.webmanifest" | absURL }}">
 <meta name="theme-color" content="{{ site.Params.assets.themeColor | default "#2e2e33" }}">
