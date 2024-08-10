@@ -18,24 +18,58 @@ Current "main" changes are as follows:
 - Built-in Chroma instead of client-side syntax highlighting with HLJS
 - Responsive Table of Contents with side display support
 - Responsive "hamburger" menu for mobile
+- Image optimization with next-gen image formats
 - Simple reading progress bar
 - Refactored RSS template (proper Atom feed)
 - Bunch of CSS and other changes
 
+### Image Optimization
+
+Images are optimized by default without requiring
+[shortcodes](https://gohugo.io/content-management/shortcodes/), by using a [custom](./layouts/_default/_markup/render-image.html) image [render hook](https://gohugo.io/getting-started/configuration-markup#markdown-render-hooks), which in turn uses the [image partial](./layouts/partial/image.html) that does all the heavy lifting.
+
+By default, the theme creates resized versions of images ranging from 300 to 700 pixels wide in increments of 100 pixels.
+
+If the image format is not [WebP](https://en.wikipedia.org/wiki/WebP), the image is converted. The original file format will serve as a fallback for browsers that don't support the WebP format.
+
+Note that only images that are part of the [page bundle](https://gohugo.io/content-management/page-bundles/) are processed.
+If served from the `static/` directory or external sources, the image will be displayed but not be processed.
+
+Additionally, all images are lazily loaded to save the bandwidth of your users.
+
 ### Credits
 Additional credits:
 - [PaperModX](https://github.com/reorx/hugo-PaperModX/) by reorx
+- [Hugo Gruvbox](https://github.com/schnerring/hugo-theme-gruvbox) theme (Image Optimization code)
 
 ### Configure
-Most of the installation process and settings are shared with the original PaperMod, so check out [their documentation](https://github.com/adityatelange/hugo-PaperMod/wiki/Installation). One noticeable difference though is that in order to enable syntax highlighting, you have to add this to your `config.yml` :
+Most of the installation process and settings are shared with the original PaperMod, so check out [their documentation](https://github.com/adityatelange/hugo-PaperMod/wiki/Installation). The noticeable differences though are the additional `config.yml` options:
+- in order to enable syntax highlighting, add:
 
-```
-markup:
-    highlight:
-        style: dracula
-        noClasses: false
-        guessSyntax: true
-```
+  ```
+  markup:
+      highlight:
+          style: dracula
+          noClasses: false
+          guessSyntax: true
+  ```
 
-See [Hugo documentation](https://gohugo.io/getting-started/configuration-markup#highlight) for more options.
-*Note: for some reason, the `guessSyntax` doesn't actually work but is required. Please make your code fences explicit for the time being.*
+  See [Hugo documentation](https://gohugo.io/getting-started/configuration-markup#highlight) for more options.
+  *Note: for some reason, the `guessSyntax` doesn't actually work but is required. Please make your code fences explicit for the time being.*
+
+- to change the image compression quality from the default 75%, per the [official Image Processing Config Hugo docs](https://gohugo.io/content-management/image-processing/#image-processing-config):
+
+  ```yaml
+  imaging:
+    quality: 75
+  ```
+
+- to change the default resize behavior:
+
+  ```yaml
+  params:
+    imageResize:
+      min: 300
+      max: 700
+      increment: 100
+  ```

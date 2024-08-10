@@ -1,0 +1,108 @@
+<!-- prettier-ignore -->
+{{- if or (or .title .caption) .attr -}}
+  <figure>
+{{ end }}
+
+{{ if (strings.HasPrefix .src "http") }}
+  <!-- External image -->
+  <img
+    src="{{ .src }}"
+    alt="{{ .alt }}"
+    {{ with .caption }}title="{{ . | markdownify | plainify }}"{{ end }}
+    {{ if .lazy }}loading="lazy"{{ end }}
+  />
+{{ else if (strings.HasPrefix .src "/") }}
+  <!-- Image from static/ -->
+  {{ $imageConfig := imageConfig (path.Join "static" .src) }}
+  <img
+    src="{{ .src }}"
+    alt="{{ .alt }}"
+    {{ with .caption }}title="{{ . | markdownify | plainify }}"{{ end }}
+    {{ if .lazy }}loading="lazy"{{ end }}
+    width="{{ $imageConfig.Width }}"
+    height="{{ $imageConfig.Height }}"
+  />
+{{ else }}
+  {{ $src := .src }}
+  {{ if strings.HasPrefix $src "./" }}
+    <!-- Strip "./" prefix from relative path -->
+    {{ $src = substr $src 2 }}
+  {{ end }}
+  <!-- Image from page bundle -->
+  {{ $images := .page.Resources.ByType "image" }}
+  {{ $image := $images.GetMatch $src }}
+  {{ if eq $image.MediaType.SubType "svg" }}
+    <!-- No processing for SVGs -->
+    <img src="{{ $image.RelPermalink }}" alt="{{ .alt }}" />
+  {{ else }}
+    {{ $image := $image.Filter (images.AutoOrient) }}
+    <!-- Calculate resize widths in increments of 100px -->
+    {{ $minWidth := .page.Site.Params.imageResize.min | default 300 }}
+    {{ $maxWidth := .page.Site.Params.imageResize.max | default 700 }}
+    {{ $increment := .page.Site.Params.imageResize.increment | default 200 }}
+    {{ $widths := seq $minWidth $increment $maxWidth }}
+    {{ if lt $image.Width $maxWidth }}
+      {{ $widths = $widths | append $image.Width }}
+    {{ end }}
+    {{ $widthsCount := len $widths }}
+
+    {{ $sizes := slice }}
+    {{ $srcSet := slice }}
+    {{ $webpSrcSet := slice }}
+    {{ range $i, $width := $widths }}
+      {{ if ge $image.Width $width }}
+        {{ if eq $i (sub $widthsCount 1) }}
+          {{ $sizes = $sizes | append (printf "%dpx" $width) }}
+        {{ else }}
+          {{ $maxWidth := (add $width (sub $increment 1)) }}
+          {{ $sizes = $sizes | append (printf "(max-width: %dpx) %dpx" $maxWidth $width) }}
+        {{ end }}
+        {{ $resized := $image.Resize (printf "%dx" $width) }}
+        {{ $srcSet = $srcSet | append (printf "%s %dw" $resized.RelPermalink $resized.Width) }}
+        {{ if not (eq "webp" $image.MediaType.SubType) }}
+          <!-- If image format is not WebP, add conversions -->
+          {{ $webp := $image.Resize (printf "%dx webp" $width) }}
+          {{ $webpSrcSet = $webpSrcSet | append (printf "%s %dw" $webp.RelPermalink $webp.Width) }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+
+    <picture>
+      <source
+        type="image/webp"
+        {{ with $webpSrcSet }}srcset="{{ delimit . "," }}"{{ end }}
+        {{ with $sizes }}sizes="{{ delimit . "," }}"{{ end }}
+      />
+      <img
+        src="{{ $image.RelPermalink }}"
+        {{ with $srcSet }}srcset="{{ delimit . "," }}"{{ end }}
+        {{ with $sizes }}sizes="{{ delimit . "," }}"{{ end }}
+        alt="{{ .alt }}"
+        {{ with .caption }}title="{{ . | markdownify | plainify }}"{{ end }}
+        {{ if .lazy }}loading="lazy"{{ end }}
+        width="{{ $image.Width }}"
+        height="{{ $image.Height }}"
+      />
+    </picture>
+  {{ end }}
+{{ end }}
+
+
+<!-- prettier-ignore -->
+{{- if or (or .title .caption) .attr -}}
+  <figcaption>
+    {{ with .title -}}
+        {{ . }}
+    {{- end -}}
+    {{- if or .caption .attr -}}<p>
+        {{- .caption | markdownify -}}
+        {{- with .attrlink }}
+            <a href="{{ . }}">
+        {{- end -}}
+        {{- .attr | markdownify -}}
+        {{- if .attrlink }}</a>{{ end }}</p>
+    {{- end }}
+  </figcaption>
+</figure>
+{{ end }}
